@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">SelfSimpleMediaLibrary</string>
+
+    <string name="controller_record_dialog_cancel" tools:ignore="ExtraTranslation">Cancel</string>
+    <string name="controller_record_dialog_confirm">OK</string>
+
+    <string name="controller_medialib_selectpage_media">媒体库</string>
+    <string name="controller_medialib_selectpage_video">视频</string>
+    <string name="controller_medialib_selectpage_audio">音频</string>
+    <string name="controller_medialib_selectpage_pic">图片</string>
+
+    <string name="controller_medialib_selectpage_all">全部</string>
+    <string name="controller_medialib_selectpage_mark">标记</string>
+    <string name="controller_medialib_selectpage_bulk_operation">批量操作</string>
+    <string name="controller_medialib_selectpage_bulk_operation_mark_cancel">取消标记</string>
+    <string name="controller_medialib_selectpage_bulk_operation_delete">删除</string>
+    <string name="controller_medialib_selectpage_bulk_operation_all_cancel">取消全选</string>
+    <string name="controller_medialib_selectpage_bulk_operation_all">全选</string>
+    <string name="controller_medialib_selectpage_bulk_select_file_toast">请选择文件</string>
+</resources>

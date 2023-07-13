@@ -1,0 +1,2 @@
+include ':app', ':autosizelib', ':mediafacer'
+rootProject.name='SelfSimpleMediaLibrary'

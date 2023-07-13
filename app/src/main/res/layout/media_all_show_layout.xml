@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#EEEEEE">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <FrameLayout
+                android:id="@+id/fl_back"
+                android:layout_width="100dp"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="16dp"
+                    android:src="@drawable/controller_medialib_top_back"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="@string/controller_medialib_selectpage_media"
+                android:textColor="#010101"
+                android:textSize="18sp" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/videoBut"
+            android:layout_width="168dp"
+            android:layout_height="200dp"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="112dp"
+            android:background="@drawable/controller_all_device_msg_button_selector"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="56dp"
+                android:src="@drawable/controller_medialib_select_page_video"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="39.67dp"
+                android:text="@string/controller_medialib_selectpage_video"
+                android:textColor="#000000"
+                android:textSize="13.33sp" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/audioBut"
+            android:layout_width="168dp"
+            android:layout_height="200dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="112dp"
+            android:background="@drawable/controller_all_device_msg_button_selector"
+            app:layout_constraintStart_toEndOf="@+id/videoBut"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="56dp"
+                android:src="@drawable/controller_medialib_select_page_audio"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="39.67dp"
+                android:text="@string/controller_medialib_selectpage_audio"
+                android:textColor="#000000"
+                android:textSize="13.33sp" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/pictureBut"
+            android:layout_width="168dp"
+            android:layout_height="200dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="112dp"
+            android:background="@drawable/controller_all_device_msg_button_selector"
+            app:layout_constraintStart_toEndOf="@+id/audioBut"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="56dp"
+                android:src="@drawable/controller_medialib_select_page_audio"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="39.67dp"
+                android:text="@string/controller_medialib_selectpage_pic"
+                android:textColor="#000000"
+                android:textSize="13.33sp" />
+
+        </RelativeLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

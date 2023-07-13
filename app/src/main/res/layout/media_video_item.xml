@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="280dp"
+        android:layout_height="72dp"
+        android:layout_margin="4dp"
+        android:background="@drawable/controller_media_position_selector"
+        tools:ignore="UselessParent">
+
+        <RelativeLayout
+            android:id="@+id/rl_video_play_show"
+            android:layout_width="64dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp">
+
+            <ImageView
+                android:id="@+id/video_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ImageButton
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_centerInParent="true"
+                android:background="@color/gray"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/media_video_play"
+                tools:ignore="UnusedAttribute" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp"
+            android:layout_toLeftOf="@+id/iv_video_select"
+            android:layout_toRightOf="@+id/rl_video_play_show"
+            tools:ignore="RtlHardcoded">
+
+            <ImageView
+                android:id="@+id/iv_video_mark"
+                android:layout_width="12.67dp"
+                android:layout_height="12dp"
+                android:layout_marginTop="5dp"
+                android:src="@drawable/controller_media_mark"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_video_create_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_toRightOf="@+id/iv_video_mark"
+                android:text="YYMMDD-HHMMSS"
+                android:textColor="#000000"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/tv_video_total_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_video_create_time"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="3dp"
+                android:text="hh:mm:ss"
+                android:textColor="#000000"
+                android:textSize="10.67sp"
+                tools:ignore="HardcodedText,SmallSp" />
+
+            <TextView
+                android:id="@+id/tv_video_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_video_create_time"
+                android:layout_toRightOf="@+id/tv_video_total_time"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="3dp"
+                android:text="-667.1KB"
+                android:textColor="#000000"
+                android:textSize="10.67sp"
+                tools:ignore="HardcodedText,SmallSp" />
+
+        </RelativeLayout>
+
+
+        <ImageView
+            android:id="@+id/iv_video_select"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="16.67dp"
+            android:visibility="invisible"
+            android:src="@drawable/controller_media_select_mark_selector"
+            tools:ignore="ContentDescription" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

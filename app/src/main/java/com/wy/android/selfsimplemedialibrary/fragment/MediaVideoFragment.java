@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +27,7 @@ import com.mmrobot.mediafacer.MediaFacer;
 import com.mmrobot.mediafacer.VideoGet;
 import com.mmrobot.mediafacer.mediaHolders.VideoContent;
 import com.mmrobot.mediafacer.mediaHolders.VideoFolderContent;
+import com.wy.android.selfsimplemedialibrary.Constants;
 import com.wy.android.selfsimplemedialibrary.DeleteMediaDialog;
 import com.wy.android.selfsimplemedialibrary.MediaViewModel;
 import com.wy.android.selfsimplemedialibrary.R;
@@ -39,7 +41,6 @@ import java.util.Objects;
 public class MediaVideoFragment extends Fragment {
 
     private static final String TAG = MediaVideoFragment.class.getSimpleName();
-    private static final String MARK_STRING = "artist";
 
     private MediaFragmentVideoLayoutBinding mBinding;
     private RecyclerView mVideoRecycler;
@@ -70,10 +71,10 @@ public class MediaVideoFragment extends Fragment {
     private VideoRecycleAdapter mVideoAdapter;
     private ImageView mIvBulkOperationAll;
     private TextView mTvBulkOperationAll;
-    private String deleteString = "是否删除2项⽂件？";
     private DeleteMediaDialog mDeleteMediaDialog;
     private MediaViewModel mMediaViewModel;
-
+    private MediaVideoPlayerFragment mPlayerFragment;
+    private int mPlayerPosition;
 
     private enum MARK_VIDEO {
         ALL,
@@ -116,6 +117,7 @@ public class MediaVideoFragment extends Fragment {
     }
 
     private void initListener() {
+        String deleteString = "是否删除2项⽂件？";
         mDeleteMediaDialog = new DeleteMediaDialog(MediaVideoFragment.this.getActivity()
                 , deleteString
                 , null
@@ -149,7 +151,6 @@ public class MediaVideoFragment extends Fragment {
                     changeMarkUI(false);
                 } else {
                     mMediaViewModel.onCilckEvent.postValue(MediaViewModel.ONCLICK.ONCLICK_RETURN_ALL_MEDIA_FRAGMENT);
-
                 }
             }
         });
@@ -183,6 +184,7 @@ public class MediaVideoFragment extends Fragment {
                 MARKOPERATION = MARKVIDEO == MARK_VIDEO.MARK
                         ? BULK_MARK_OPERATION.BULK_MARK_CANCEL
                         : BULK_MARK_OPERATION.BULK_MARK;
+                selectedVideos.clear();
                 mRlBulkOperation.setVisibility(View.VISIBLE);
                 mRlBulkOperationTop.setVisibility(View.GONE);
                 mIvTopBack.setSelected(true);
@@ -203,8 +205,10 @@ public class MediaVideoFragment extends Fragment {
                 }
                 if (MARKOPERATION == BULK_MARK_OPERATION.BULK_MARK) {
                     markSelectedVideos();
+                    allVideosSelectCancel();
                 } else {
                     markSelectedVideosCancel();
+                    allVideosSelectCancel();
                 }
             }
         });
@@ -218,7 +222,7 @@ public class MediaVideoFragment extends Fragment {
                             , Toast.LENGTH_LONG).show();
                     return;
                 }
-                String text = String.format("是否删除%s项文件？",selectedVideos.size()+"");
+                String text = String.format("是否删除%s项文件？", selectedVideos.size() + "");
                 mDeleteMediaDialog.show();
                 mDeleteMediaDialog.setTitle(text);
             }
@@ -246,7 +250,26 @@ public class MediaVideoFragment extends Fragment {
     private void initObserver() {
         mMediaViewModel = ViewModelProviders.of(Objects.requireNonNull(getActivity()))
                 .get(MediaViewModel.class);
-
+        mMediaViewModel.onCilckEvent.observe(this, new Observer<MediaViewModel.ONCLICK>() {
+            @Override
+            public void onChanged(MediaViewModel.ONCLICK onclick) {
+                switch (onclick) {
+                    case ONCLICK_RETURN_VIDEO_FRAGMENT: {
+                        back2MediaVideoFragment();
+                    }
+                    break;
+                    case ONCLICK_VIDEO_PLAY_MARK: {
+                        updateVideoPlayMark();
+                    }
+                    break;
+                    case ONCLICK_VIDEO_PLAY_DELETE: {
+                        deleteVideoContent();
+                        back2MediaVideoFragment();
+                    }
+                    break;
+                }
+            }
+        });
     }
 
     private void initView() {
@@ -304,7 +327,7 @@ public class MediaVideoFragment extends Fragment {
         }
 
         for (int i = 0; i < allVideos.size(); i++) {
-            if (allVideos.get(i).getArtist().contains(MARK_STRING)) {
+            if (allVideos.get(i).getArtist().contains(Constants.MARK_STRING)) {
                 markVideos.add(allVideos.get(i));
             }
         }
@@ -316,6 +339,7 @@ public class MediaVideoFragment extends Fragment {
             public void onVideoItemClicked(int position) {
                 if (BULKOPERATION == BULK_OPERATION.BULK_UNSELECT) {
                     //play video
+                    mPlayerPosition = position;
                     playVideo(position);
                 } else {
                     selectVideoAction(position);
@@ -346,7 +370,7 @@ public class MediaVideoFragment extends Fragment {
     private boolean judgeMarkType() {
         if (selectedVideos.size() < 1) return true;
         for (int i = 0; i < selectedVideos.size(); i++) {
-            boolean isMark = selectedVideos.get(i).getArtist().equals(MARK_STRING);
+            boolean isMark = selectedVideos.get(i).getArtist().equals(Constants.MARK_STRING);
             if (!isMark) {
                 return true;
             }
@@ -445,11 +469,10 @@ public class MediaVideoFragment extends Fragment {
     private void markSelectedVideos() {
         if (selectedVideos == null || selectedVideos.size() < 1) return;
         for (int i = 0; i < selectedVideos.size(); i++) {
-            selectedVideos.get(i).setArtist(MARK_STRING);
+            selectedVideos.get(i).setArtist(Constants.MARK_STRING);
             MediaFacer.withVideoContex(getContext())
-                    .favoriteVideo(Uri.parse(selectedVideos.get(i).getVideoUri()), "artist");
+                    .favoriteVideo(Uri.parse(selectedVideos.get(i).getVideoUri()), Constants.MARK_STRING);
         }
-        allVideosSelectCancel();
     }
 
     private void markSelectedVideosCancel() {
@@ -459,7 +482,6 @@ public class MediaVideoFragment extends Fragment {
             MediaFacer.withVideoContex(getContext())
                     .favoriteVideo(Uri.parse(selectedVideos.get(i).getVideoUri()), "");
         }
-        allVideosSelectCancel();
     }
 
     private void deleteVideos() {
@@ -475,29 +497,72 @@ public class MediaVideoFragment extends Fragment {
             }
         } else {
             for (int i = 0; i < selectedVideos.size(); i++) {
-                allVideos.remove(selectedVideos.get(i));
+                markVideos.remove(selectedVideos.get(i));
             }
         }
         selectedVideos.clear();
+        mTvTopTitle.setText("已选择0项");
         mVideoAdapter.notifyDataSetChanged();
     }
 
     private void playVideo(int position) {
-        MediaVideoPlayerFragment playerFragment = new MediaVideoPlayerFragment();
-        playerFragment.setVideosData(allVideos, position);
+        if (mPlayerFragment == null) {
+            mPlayerFragment = new MediaVideoPlayerFragment(mMediaViewModel);
+        }
+        mPlayerFragment.setVideosData(MARKVIDEO == MARK_VIDEO.ALL ? allVideos.get(position) : markVideos.get(position));
 
         Transition transition = TransitionInflater.from(getActivity()).
                 inflateTransition(android.R.transition.explode);
 
-        playerFragment.setEnterTransition(transition);
-        playerFragment.setExitTransition(transition);
+        mPlayerFragment.setEnterTransition(transition);
+        mPlayerFragment.setExitTransition(transition);
 
         getChildFragmentManager()
                 .beginTransaction()
-                .replace(R.id.play_holder, playerFragment)
+                .replace(R.id.play_holder, mPlayerFragment)
                 .addToBackStack(null)
                 .commit();
     }
 
+    private void back2MediaVideoFragment() {
+        getChildFragmentManager().beginTransaction().remove(mPlayerFragment).commit();
+        mPlayerFragment = null;
+        getVideos();
+        if (MARKVIDEO == MARK_VIDEO.ALL) {
+            mVideoAdapter.setVideoListDataSetChanged(allVideos);
+        } else {
+            mVideoAdapter.setVideoListDataSetChanged(markVideos);
+        }
+    }
+
+    private void updateVideoPlayMark() {
+        if (mPlayerPosition < 0) return;
+        if (MARKVIDEO == MARK_VIDEO.ALL) {
+            VideoContent positionVideo = allVideos.get(mPlayerPosition);
+            boolean isMark = positionVideo.getArtist().contains(Constants.MARK_STRING);
+            positionVideo.setArtist(isMark ? "" : Constants.MARK_STRING);
+            MediaFacer.withVideoContex(getContext())
+                    .favoriteVideo(Uri.parse(positionVideo.getVideoUri())
+                            , isMark ? "" : Constants.MARK_STRING);
+        } else {
+            VideoContent positionVideo = markVideos.get(mPlayerPosition);
+            boolean isMark = positionVideo.getArtist().contains(Constants.MARK_STRING);
+            positionVideo.setArtist(isMark ? "" : Constants.MARK_STRING);
+            MediaFacer.withVideoContex(getContext())
+                    .favoriteVideo(Uri.parse(positionVideo.getVideoUri())
+                            , isMark ? "" : Constants.MARK_STRING);
+        }
+    }
+
+    private void deleteVideoContent() {
+        if (mPlayerPosition < 0) return;
+        if (MARKVIDEO == MARK_VIDEO.ALL) {
+            MediaFacer.withVideoContex(getContext())
+                    .deleteVideo(Uri.parse(allVideos.get(mPlayerPosition).getVideoUri()));
+        } else {
+            MediaFacer.withVideoContex(getContext())
+                    .deleteVideo(Uri.parse(markVideos.get(mPlayerPosition).getVideoUri()));
+        }
+    }
 
 }

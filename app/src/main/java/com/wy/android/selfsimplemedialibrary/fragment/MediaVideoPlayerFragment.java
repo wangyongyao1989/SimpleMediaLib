@@ -9,157 +9,179 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.mmrobot.mediafacer.MediaDataCalculator;
 import com.mmrobot.mediafacer.mediaHolders.VideoContent;
+import com.wy.android.selfsimplemedialibrary.Constants;
+import com.wy.android.selfsimplemedialibrary.DeleteMediaDialog;
+import com.wy.android.selfsimplemedialibrary.MMDateUtil;
+import com.wy.android.selfsimplemedialibrary.MediaViewModel;
 import com.wy.android.selfsimplemedialibrary.R;
+import com.wy.android.selfsimplemedialibrary.databinding.MeidaVideoPlayLayoutBinding;
 
 
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class MediaVideoPlayerFragment extends Fragment {
 
-    private VideoView playZone;
-    private ImageButton play;
-    private SeekBar seeker;
-    private TextView progress_text;
-    private TextView duration;
-    private LinkedList<VideoContent> videos;
-    private int position;
+    private static final String TAG = MediaVideoPlayerFragment.class.getSimpleName();
+    private VideoContent mVideoContent;
     private Handler mHandler;
     private Runnable mSeekbarPositionUpdateTask;
-    private ConstraintLayout playerParent;
+    private MeidaVideoPlayLayoutBinding mBinding;
+    private FrameLayout mFlBack;
+    private TextView mTvVideoTitle;
+    private ImageView mIvVideoMark;
+    private ImageView mIvVideoDelete;
+    private ImageView mIvVideoInfo;
+    private VideoView mVidZone;
+    private SeekBar mSeekerPlay;
+    private ImageView mIvVideoPlayStatus;
+    private TextView mTvVideoPlayTime;
+    private ImageView mIvVideoVolStatus;
+    private View mPlayCover;
+    private RelativeLayout mRlVideoTop;
+    private RelativeLayout mRlPlayBottom;
+    private STATUS_DISPLAY mStatusDisplay = STATUS_DISPLAY.SHOW_STATUS;
+    private TextView mTvVideoTotalTime;
+    private MediaViewModel mMediaViewModel;
+    private DeleteMediaDialog mDeleteMediaDialog;
+
+
+    public MediaVideoPlayerFragment(MediaViewModel mediaViewModel) {
+        mMediaViewModel = mediaViewModel;
+    }
+
+    enum STATUS_DISPLAY {
+        SHOW_STATUS,
+        HIDE_STATUS,
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.media_video_player, container, false);
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.meida_video_play_layout, container, false);
+        initView();
+        initObserver();
+        initListener();
+        initData();
+        return mBinding.getRoot();
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        setUpViews(view);
-        playZone.setVideoURI(Uri.parse(videos.get(position).getVideoUri()));
-        playZone.requestFocus();
-        seeker.setMax((int) videos.get(position).getVideoDuration());
-        playZone.start();
-        startUpdatingCallbackWithPosition();
-        play.setImageDrawable(getResources().getDrawable(R.drawable.media_video_pause));
-
-        final Handler handler = new Handler();
-        Runnable run = new Runnable() {
-            @Override
-            public void run() {
-                playerParent.setVisibility(View.GONE);
-            }
-        };
-        handler.postDelayed(run, 2000);
+    @SuppressLint("SetTextI18n")
+    private void initData() {
+        String videoContentPath = mVideoContent.getPath();
+        String fileLastModifiedTime = MMDateUtil.getFileLastModifiedTime(videoContentPath);
+        mTvVideoTitle.setText(fileLastModifiedTime);
+        mTvVideoTotalTime.setText(MediaDataCalculator.convertDuration(mVideoContent.getVideoDuration()) + "/");
+        mVidZone.setVideoURI(Uri.parse(mVideoContent.getVideoUri()));
+        mVidZone.requestFocus();
+        mSeekerPlay.setMax((int) mVideoContent.getVideoDuration());
+        mIvVideoMark.setSelected(mVideoContent.getArtist().equals(Constants.MARK_STRING));
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void setUpViews(View page) {
-        View control = page.findViewById(R.id.control);
-        playerParent = page.findViewById(R.id.player_parent);
-        playZone = page.findViewById(R.id.vid_zone);
-        ImageButton previous = page.findViewById(R.id.previous);
-        play = page.findViewById(R.id.play);
-        ImageButton next = page.findViewById(R.id.next);
-        ImageButton rewind = page.findViewById(R.id.rewind);
-        ImageButton forward = page.findViewById(R.id.forward);
-        seeker = page.findViewById(R.id.seeker);
-        progress_text = page.findViewById(R.id.progress);
-        duration = page.findViewById(R.id.duration);
+    private void initListener() {
 
-        control.setOnClickListener(new View.OnClickListener() {
+        mFlBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (playerParent.getVisibility() == View.GONE) {
-                    playerParent.setVisibility(View.VISIBLE);
+                if (mMediaViewModel != null) {
+                    mMediaViewModel.onCilckEvent.postValue(MediaViewModel.ONCLICK.ONCLICK_RETURN_VIDEO_FRAGMENT);
+                }
+            }
+        });
+
+        mIvVideoMark.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean selected = mIvVideoMark.isSelected();
+                mIvVideoMark.setSelected(!selected);
+                mMediaViewModel.onCilckEvent.postValue(MediaViewModel.ONCLICK.ONCLICK_VIDEO_PLAY_MARK);
+            }
+        });
+
+        mIvVideoDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mDeleteMediaDialog == null) {
+                    String deleteString = "是否删除该项⽂件？";
+                    mDeleteMediaDialog = new DeleteMediaDialog(MediaVideoPlayerFragment.this.getActivity()
+                            , deleteString
+                            , null
+                            , new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            mMediaViewModel.onCilckEvent.postValue(MediaViewModel.ONCLICK.ONCLICK_VIDEO_PLAY_DELETE);
+                            mDeleteMediaDialog.dismiss();
+                        }
+                    });
+                }
+                mDeleteMediaDialog.setCanotBackPress();
+                mDeleteMediaDialog.setCanceledOnTouchOutside(true);
+                mDeleteMediaDialog.show();
+            }
+        });
+
+        mIvVideoInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+
+        mPlayCover.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mStatusDisplay == STATUS_DISPLAY.SHOW_STATUS) {
+                    mRlVideoTop.setVisibility(View.GONE);
+                    mRlPlayBottom.setVisibility(View.GONE);
+                    mStatusDisplay = STATUS_DISPLAY.HIDE_STATUS;
                 } else {
-                    playerParent.setVisibility(View.GONE);
+                    mRlVideoTop.setVisibility(View.VISIBLE);
+                    mRlPlayBottom.setVisibility(View.VISIBLE);
+                    mStatusDisplay = STATUS_DISPLAY.SHOW_STATUS;
                 }
             }
         });
 
-        rewind.setOnClickListener(new View.OnClickListener() {
+        mIvVideoPlayStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (playZone != null) {
-                    int current = playZone.getCurrentPosition();
-                    //rewind 10 seconds behind
-                    if (current > 10000) {
-                        current = current - 10000;
-                    } else {
-                        current = 0;
-                    }
-
-                    playZone.seekTo(current);
-                    seeker.setProgress(current);
-                }
-            }
-        });
-
-        forward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (playZone != null) {
-                    int current = playZone.getCurrentPosition();
-                    //forward 10 seconds ahead
-                    int max = (int) videos.get(position).getVideoDuration();
-                    int diff = max - current;
-                    if (diff > 10000) {
-                        current = current + 10000;
-                    } else {
-                        current = max;
-                    }
-
-                    playZone.seekTo(current);
-                    seeker.setProgress(current);
-                }
-            }
-        });
-
-        previous.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playprevious();
-            }
-        });
-
-        next.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playnext();
-//                MediaFacer.withVideoContex(getContext()).deleteVideo(Uri.parse(videos.get(4).getVideoUri()));
-            }
-        });
-
-        play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (playZone.isPlaying()) {
-                    playZone.pause();
-                    play.setImageDrawable(getResources().getDrawable(R.drawable.media_video_play));
+                if (mVidZone.isPlaying()) {
+                    mVidZone.pause();
+                    mIvVideoPlayStatus.setSelected(true);
                 } else {
-                    playZone.start();
-                    play.setImageDrawable(getResources().getDrawable(R.drawable.media_video_pause));
+                    mVidZone.start();
+                    startUpdatingCallbackWithPosition();
+                    mIvVideoPlayStatus.setSelected(false);
                 }
             }
         });
 
-        duration.setText(MediaDataCalculator.convertDuration(videos.get(position).getVideoDuration()));
+        mVidZone.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mVidZone.stopPlayback();
+                stopUpdatingCallbackWithPosition();
+            }
+        });
 
-        seeker.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        mSeekerPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int userSelectedPosition = 0;
 
             @Override
@@ -167,7 +189,7 @@ public class MediaVideoPlayerFragment extends Fragment {
                 if (fromUser) {
                     userSelectedPosition = progress;
                 }
-                progress_text.setText(MediaDataCalculator.milliSecondsToTimer(progress));
+                mTvVideoPlayTime.setText(MediaDataCalculator.milliSecondsToTimer(progress));
                 seekBar.setProgress(progress);
             }
 
@@ -177,60 +199,47 @@ public class MediaVideoPlayerFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                playZone.seekTo(userSelectedPosition);
+                mVidZone.seekTo(userSelectedPosition);
             }
         });
 
-        playZone.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        mIvVideoVolStatus.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCompletion(MediaPlayer mp) {
-                playZone.stopPlayback();
-                stopUpdatingCallbackWithPosition();
-//                playnext();
+            public void onClick(View v) {
+
             }
         });
 
     }
 
-    private void playnext() {
-        if (position == videos.size() - 1) {
-            position = 0;
-            playZone.setVideoURI(Uri.parse(videos.get(position).getVideoUri()));
-            seeker.setMax((int) videos.get(position).getVideoDuration());
-            duration.setText(MediaDataCalculator.convertDuration(videos.get(position).getVideoDuration()));
-            playZone.start();
-            startUpdatingCallbackWithPosition();
-        } else {
-            position = position + 1;
-            playZone.setVideoURI(Uri.parse(videos.get(position).getVideoUri()));
-            seeker.setMax((int) videos.get(position).getVideoDuration());
-            duration.setText(MediaDataCalculator.convertDuration(videos.get(position).getVideoDuration()));
-            playZone.start();
-            startUpdatingCallbackWithPosition();
-        }
+    private void initObserver() {
+        mMediaViewModel = ViewModelProviders.of(Objects.requireNonNull(getActivity()))
+                .get(MediaViewModel.class);
     }
 
-    private void playprevious() {
-        if (position == 0) {
-            position = videos.size() - 1;
-            playZone.setVideoURI(Uri.parse(videos.get(position).getVideoUri()));
-            seeker.setMax((int) videos.get(position).getVideoDuration());
-            duration.setText(MediaDataCalculator.convertDuration(videos.get(position).getVideoDuration()));
-            playZone.start();
-            startUpdatingCallbackWithPosition();
-        } else {
-            position = position - 1;
-            playZone.setVideoURI(Uri.parse(videos.get(position).getVideoUri()));
-            seeker.setMax((int) videos.get(position).getVideoDuration());
-            duration.setText(MediaDataCalculator.convertDuration(videos.get(position).getVideoDuration()));
-            playZone.start();
-            startUpdatingCallbackWithPosition();
-        }
+    private void initView() {
+        mRlVideoTop = mBinding.rlVideoTop;
+        mFlBack = mBinding.flBack;
+        mTvVideoTitle = mBinding.tvVideoTitle;
+        mIvVideoMark = mBinding.ivVideoMark;
+        mIvVideoDelete = mBinding.ivVideoDelete;
+        mIvVideoInfo = mBinding.ivVideoInfo;
+
+        mVidZone = mBinding.vidZone;
+        mPlayCover = mBinding.playCover;
+
+        mRlPlayBottom = mBinding.rlPlayBottom;
+        mIvVideoPlayStatus = mBinding.ivVideoPlayStatus;
+        mSeekerPlay = mBinding.seekerPlay;
+        mTvVideoPlayTime = mBinding.tvVideoPlayTime;
+        mTvVideoTotalTime = mBinding.tvVideoTotalTime;
+        mIvVideoVolStatus = mBinding.ivVideoVolStatus;
+        mIvVideoPlayStatus.setSelected(true);
     }
 
-    public void setVideosData(LinkedList<VideoContent> videos, int position) {
-        this.videos = videos;
-        this.position = position;
+
+    public void setVideosData(VideoContent videos) {
+        this.mVideoContent = videos;
     }
 
     private void startUpdatingCallbackWithPosition() {
@@ -254,14 +263,15 @@ public class MediaVideoPlayerFragment extends Fragment {
             mHandler.removeCallbacks(mSeekbarPositionUpdateTask);
             mHandler = null;
             mSeekbarPositionUpdateTask = null;
-            seeker.setProgress(0);
+            mSeekerPlay.setProgress(0);
+            mIvVideoPlayStatus.setSelected(false);
         }
     }
 
     private void updateProgressCallbackTask() {
-        if (playZone != null) {
-            int currentPosition = playZone.getCurrentPosition();
-            seeker.setProgress(currentPosition);
+        if (mVidZone != null) {
+            int currentPosition = mVidZone.getCurrentPosition();
+            mSeekerPlay.setProgress(currentPosition);
         }
     }
 

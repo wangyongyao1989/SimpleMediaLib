@@ -1,13 +1,10 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
-
-
+    compileSdk 32
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 31
+        minSdk 24
+        targetSdk 32
         versionCode 1
         versionName "1.0"
 
@@ -19,6 +16,14 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    allprojects{
+        gradle.projectsEvaluated{
+            tasks.withType(JavaCompile){
+                options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            }
         }
     }
 
